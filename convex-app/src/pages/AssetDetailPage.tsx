@@ -16,7 +16,11 @@ export function AssetDetailPage() {
   const setAssetVersionReviewState = useMutation(api.dashboard.setAssetVersionReviewState);
   const [noteBody, setNoteBody] = useState('');
   const [assetFeedbackBody, setAssetFeedbackBody] = useState('');
+  const [assetReferenceImageUrl, setAssetReferenceImageUrl] = useState('');
+  const [assetReferenceLabel, setAssetReferenceLabel] = useState('');
   const [slideFeedbackBody, setSlideFeedbackBody] = useState('');
+  const [slideReferenceImageUrl, setSlideReferenceImageUrl] = useState('');
+  const [slideReferenceLabel, setSlideReferenceLabel] = useState('');
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -57,10 +61,14 @@ export function AssetDetailPage() {
         assetVersionId: data.currentVersion?._id,
         scopeType: 'asset',
         body: assetFeedbackBody.trim(),
+        referenceImageUrl: assetReferenceImageUrl.trim() || undefined,
+        referenceLabel: assetReferenceLabel.trim() || undefined,
         authorType: 'human',
         authorId: 'Avril reviewer',
       });
       setAssetFeedbackBody('');
+      setAssetReferenceImageUrl('');
+      setAssetReferenceLabel('');
     } finally {
       setIsSaving(false);
     }
@@ -77,10 +85,14 @@ export function AssetDetailPage() {
         scopeType: 'slide',
         slideIndex: selectedSlideIndex,
         body: slideFeedbackBody.trim(),
+        referenceImageUrl: slideReferenceImageUrl.trim() || undefined,
+        referenceLabel: slideReferenceLabel.trim() || undefined,
         authorType: 'human',
         authorId: 'Avril reviewer',
       });
       setSlideFeedbackBody('');
+      setSlideReferenceImageUrl('');
+      setSlideReferenceLabel('');
     } finally {
       setIsSaving(false);
     }
@@ -136,6 +148,10 @@ export function AssetDetailPage() {
             placeholder="Add overall feedback about narrative, structure, CTA, tone, or strategic direction"
             value={assetFeedbackBody}
             onChange={setAssetFeedbackBody}
+            referenceImageUrl={assetReferenceImageUrl}
+            onReferenceImageUrlChange={setAssetReferenceImageUrl}
+            referenceLabel={assetReferenceLabel}
+            onReferenceLabelChange={setAssetReferenceLabel}
             onSubmit={handleAssetFeedbackSubmit}
             disabled={isSaving || !assetFeedbackBody.trim()}
             buttonLabel="Save overall feedback"
@@ -160,6 +176,10 @@ export function AssetDetailPage() {
             placeholder="Add precise feedback for this slide"
             value={slideFeedbackBody}
             onChange={setSlideFeedbackBody}
+            referenceImageUrl={slideReferenceImageUrl}
+            onReferenceImageUrlChange={setSlideReferenceImageUrl}
+            referenceLabel={slideReferenceLabel}
+            onReferenceLabelChange={setSlideReferenceLabel}
             onSubmit={handleSlideFeedbackSubmit}
             disabled={isSaving || !slideFeedbackBody.trim()}
             buttonLabel="Save slide feedback"
@@ -170,6 +190,11 @@ export function AssetDetailPage() {
             placeholder="Add a note for the next reviewer or approver"
             value={noteBody}
             onChange={setNoteBody}
+            referenceImageUrl=""
+            onReferenceImageUrlChange={() => {}}
+            referenceLabel=""
+            onReferenceLabelChange={() => {}}
+            showReferenceFields={false}
             onSubmit={handleNoteSubmit}
             disabled={isSaving || !noteBody.trim()}
             buttonLabel="Save note"

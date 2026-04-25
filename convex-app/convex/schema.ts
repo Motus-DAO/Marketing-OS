@@ -111,6 +111,8 @@ export default defineSchema({
     scopeType: v.union(v.literal('asset'), v.literal('slide')),
     slideIndex: v.optional(v.number()),
     body: v.string(),
+    referenceImageUrl: v.optional(v.string()),
+    referenceLabel: v.optional(v.string()),
     authorType: v.union(v.literal('human'), v.literal('agent')),
     authorId: v.optional(v.string()),
     status: v.union(v.literal('open'), v.literal('resolved')),

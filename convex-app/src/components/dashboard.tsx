@@ -221,6 +221,14 @@ export function FeedbackCommentList({ title, eyebrow, comments, emptyText, onRes
                   </div>
                 </div>
                 <p>{comment.body}</p>
+                {comment.referenceImageUrl ? (
+                  <div className="feedback-reference-block">
+                    {comment.referenceLabel ? <span className="feedback-reference-label">{comment.referenceLabel}</span> : null}
+                    <a href={comment.referenceImageUrl} target="_blank" rel="noreferrer" className="feedback-reference-link">
+                      <img src={comment.referenceImageUrl} alt={comment.referenceLabel || 'Feedback reference'} className="feedback-reference-image" />
+                    </a>
+                  </div>
+                ) : null}
               </div>
               {onResolveToggle ? (
                 <button
@@ -240,7 +248,7 @@ export function FeedbackCommentList({ title, eyebrow, comments, emptyText, onRes
   );
 }
 
-export function FeedbackForm({ title, eyebrow, placeholder, value, onChange, onSubmit, disabled, buttonLabel }: { title: string; eyebrow: string; placeholder: string; value: string; onChange: (value: string) => void; onSubmit: () => void; disabled: boolean; buttonLabel: string }) {
+export function FeedbackForm({ title, eyebrow, placeholder, value, onChange, referenceImageUrl, onReferenceImageUrlChange, referenceLabel, onReferenceLabelChange, showReferenceFields = true, onSubmit, disabled, buttonLabel }: { title: string; eyebrow: string; placeholder: string; value: string; onChange: (value: string) => void; referenceImageUrl: string; onReferenceImageUrlChange: (value: string) => void; referenceLabel: string; onReferenceLabelChange: (value: string) => void; showReferenceFields?: boolean; onSubmit: () => void; disabled: boolean; buttonLabel: string }) {
   return (
     <section className="panel">
       <div className="section-header">
@@ -251,6 +259,12 @@ export function FeedbackForm({ title, eyebrow, placeholder, value, onChange, onS
       </div>
       <div className="note-form">
         <textarea value={value} onChange={(event) => onChange(event.target.value)} rows={4} placeholder={placeholder} />
+        {showReferenceFields ? (
+          <>
+            <input value={referenceImageUrl} onChange={(event) => onReferenceImageUrlChange(event.target.value)} placeholder="Optional reference image URL" />
+            <input value={referenceLabel} onChange={(event) => onReferenceLabelChange(event.target.value)} placeholder="Optional reference label, e.g. layout reference" />
+          </>
+        ) : null}
         <button className="primary-button" disabled={disabled} type="button" onClick={onSubmit}>{buttonLabel}</button>
       </div>
     </section>
