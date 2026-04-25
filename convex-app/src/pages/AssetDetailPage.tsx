@@ -1,18 +1,23 @@
-import { FormEvent, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { api } from '../../convex/_generated/api';
 import { EmptyState } from '../components/EmptyState';
-import { AssetHeader, CarouselPreview, ReviewActionBar, ReviewNoteList, VersionList } from '../components/dashboard';
+import { AssetHeader, CarouselPreview, FeedbackCommentList, FeedbackForm, ReviewActionBar, ReviewNoteList, VersionList } from '../components/dashboard';
 
 export function AssetDetailPage() {
   const { assetId } = useParams();
   const navigate = useNavigate();
   const data = useQuery(api.dashboard.getAssetDetail, assetId ? { assetId: assetId as any } : 'skip');
   const createReviewNote = useMutation(api.dashboard.createReviewNote);
+  const createFeedbackComment = useMutation(api.dashboard.createFeedbackComment);
+  const updateFeedbackCommentStatus = useMutation(api.dashboard.updateFeedbackCommentStatus);
   const setCurrentVersion = useMutation(api.dashboard.setCurrentVersion);
-  const setAssetApprovalState = useMutation(api.dashboard.setAssetApprovalState);
+  const setAssetVersionReviewState = useMutation(api.dashboard.setAssetVersionReviewState);
   const [noteBody, setNoteBody] = useState('');
+  const [assetFeedbackBody, setAssetFeedbackBody] = useState('');
+  const [slideFeedbackBody, setSlideFeedbackBody] = useState('');
+  const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
 
   if (data === undefined) {
@@ -23,8 +28,14 @@ export function AssetDetailPage() {
     return <EmptyState title="Asset not found" body="The selected asset does not exist or is not available yet." />;
   }
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const feedbackComments = data.feedbackComments ?? [];
+  const assetComments = useMemo(() => feedbackComments.filter((comment: any) => comment.scopeType === 'asset'), [feedbackComments]);
+  const slideComments = useMemo(
+    () => feedbackComments.filter((comment: any) => comment.scopeType === 'slide' && comment.slideIndex === selectedSlideIndex),
+    [feedbackComments, selectedSlideIndex]
+  );
+
+  const handleNoteSubmit = async () => {
     if (!noteBody.trim()) return;
 
     setIsSaving(true);
@@ -36,13 +47,53 @@ export function AssetDetailPage() {
     }
   };
 
-  const handleApproval = async (approvalState: 'approved' | 'rejected') => {
+  const handleAssetFeedbackSubmit = async () => {
+    if (!assetFeedbackBody.trim()) return;
+
     setIsSaving(true);
     try {
-      await setAssetApprovalState({
+      await createFeedbackComment({
         assetId: data.asset._id,
-        approvalState,
-        versionId: data.currentVersion?._id,
+        assetVersionId: data.currentVersion?._id,
+        scopeType: 'asset',
+        body: assetFeedbackBody.trim(),
+        authorType: 'human',
+        authorId: 'Avril reviewer',
+      });
+      setAssetFeedbackBody('');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSlideFeedbackSubmit = async () => {
+    if (!slideFeedbackBody.trim()) return;
+
+    setIsSaving(true);
+    try {
+      await createFeedbackComment({
+        assetId: data.asset._id,
+        assetVersionId: data.currentVersion?._id,
+        scopeType: 'slide',
+        slideIndex: selectedSlideIndex,
+        body: slideFeedbackBody.trim(),
+        authorType: 'human',
+        authorId: 'Avril reviewer',
+      });
+      setSlideFeedbackBody('');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleReviewState = async (reviewState: 'in_review' | 'approved' | 'rejected' | 'needs_changes') => {
+    if (!data.currentVersion?._id) return;
+    setIsSaving(true);
+    try {
+      await setAssetVersionReviewState({
+        assetId: data.asset._id,
+        versionId: data.currentVersion._id,
+        reviewState,
       });
     } finally {
       setIsSaving(false);
@@ -63,20 +114,66 @@ export function AssetDetailPage() {
 
       <div className="detail-grid">
         <div className="detail-main">
-          <CarouselPreview version={data.currentVersion} />
+          <CarouselPreview version={data.currentVersion} selectedSlideIndex={selectedSlideIndex} onSelectSlide={setSelectedSlideIndex} />
           <ReviewNoteList notes={data.notes} />
-          <section className="panel">
-            <div className="section-header">
-              <div>
-                <p className="eyebrow">Add note</p>
-                <h2>Leave review context</h2>
-              </div>
-            </div>
-            <form className="note-form" onSubmit={handleSubmit}>
-              <textarea value={noteBody} onChange={(event) => setNoteBody(event.target.value)} rows={4} placeholder="Add a note for the next reviewer or approver" />
-              <button className="primary-button" disabled={isSaving || !noteBody.trim()} type="submit">Save note</button>
-            </form>
-          </section>
+          <FeedbackCommentList
+            title="Overall carousel feedback"
+            eyebrow="Feedback"
+            comments={assetComments}
+            emptyText="No overall carousel feedback yet."
+            onResolveToggle={async (commentId, nextStatus) => {
+              setIsSaving(true);
+              try {
+                await updateFeedbackCommentStatus({ commentId: commentId as any, status: nextStatus });
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+          />
+          <FeedbackForm
+            title="Add overall feedback"
+            eyebrow="Feedback"
+            placeholder="Add overall feedback about narrative, structure, CTA, tone, or strategic direction"
+            value={assetFeedbackBody}
+            onChange={setAssetFeedbackBody}
+            onSubmit={handleAssetFeedbackSubmit}
+            disabled={isSaving || !assetFeedbackBody.trim()}
+            buttonLabel="Save overall feedback"
+          />
+          <FeedbackCommentList
+            title={`Slide ${selectedSlideIndex + 1} feedback`}
+            eyebrow="Slide feedback"
+            comments={slideComments}
+            emptyText="No slide-specific feedback yet."
+            onResolveToggle={async (commentId, nextStatus) => {
+              setIsSaving(true);
+              try {
+                await updateFeedbackCommentStatus({ commentId: commentId as any, status: nextStatus });
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+          />
+          <FeedbackForm
+            title={`Comment on slide ${selectedSlideIndex + 1}`}
+            eyebrow="Slide feedback"
+            placeholder="Add precise feedback for this slide"
+            value={slideFeedbackBody}
+            onChange={setSlideFeedbackBody}
+            onSubmit={handleSlideFeedbackSubmit}
+            disabled={isSaving || !slideFeedbackBody.trim()}
+            buttonLabel="Save slide feedback"
+          />
+          <FeedbackForm
+            title="Add legacy review note"
+            eyebrow="Notes"
+            placeholder="Add a note for the next reviewer or approver"
+            value={noteBody}
+            onChange={setNoteBody}
+            onSubmit={handleNoteSubmit}
+            disabled={isSaving || !noteBody.trim()}
+            buttonLabel="Save note"
+          />
         </div>
 
         <div className="detail-side">
@@ -93,7 +190,7 @@ export function AssetDetailPage() {
               }
             }}
           />
-          <ReviewActionBar currentState={data.asset.approvalState} isUpdating={isSaving} onApprove={() => handleApproval('approved')} onReject={() => handleApproval('rejected')} />
+          <ReviewActionBar currentState={data.asset.approvalState} isUpdating={isSaving} onSetState={handleReviewState} />
         </div>
       </div>
     </section>

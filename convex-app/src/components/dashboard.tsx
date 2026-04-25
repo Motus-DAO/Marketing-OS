@@ -106,7 +106,7 @@ export function AssetHeader({ asset, project, notionUrl }: { asset: any; project
   );
 }
 
-export function CarouselPreview({ version }: { version: any }) {
+export function CarouselPreview({ version, selectedSlideIndex, onSelectSlide }: { version: any; selectedSlideIndex: number; onSelectSlide: (index: number) => void }) {
   const previewUrls = version?.previewUrls ?? [];
 
   return (
@@ -120,10 +120,15 @@ export function CarouselPreview({ version }: { version: any }) {
       {previewUrls.length > 0 ? (
         <div className="preview-grid">
           {previewUrls.map((url: string, index: number) => (
-            <div key={`${url}-${index}`} className="preview-frame">
+            <button
+              key={`${url}-${index}`}
+              type="button"
+              className={`preview-frame preview-button ${selectedSlideIndex === index ? 'is-selected' : ''}`}
+              onClick={() => onSelectSlide(index)}
+            >
               <img src={url} alt={`Slide ${index + 1}`} />
               <span>Slide {index + 1}</span>
-            </div>
+            </button>
           ))}
         </div>
       ) : (
@@ -194,7 +199,65 @@ export function ReviewNoteList({ notes }: { notes: any[] }) {
   );
 }
 
-export function ReviewActionBar({ currentState, onApprove, onReject, isUpdating }: { currentState?: string; onApprove: () => void; onReject: () => void; isUpdating: boolean }) {
+export function FeedbackCommentList({ title, eyebrow, comments, emptyText, onResolveToggle }: { title: string; eyebrow: string; comments: any[]; emptyText: string; onResolveToggle?: (commentId: string, nextStatus: 'open' | 'resolved') => void }) {
+  return (
+    <section className="panel">
+      <div className="section-header">
+        <div>
+          <p className="eyebrow">{eyebrow}</p>
+          <h2>{title}</h2>
+        </div>
+      </div>
+      {comments.length ? (
+        <div className="stack-list">
+          {comments.map((comment) => (
+            <div key={comment._id} className="note-card">
+              <div className="feedback-note-body">
+                <div className="card-header">
+                  <strong>{comment.authorId || comment.authorType || 'Reviewer'}</strong>
+                  <div className="feedback-note-meta">
+                    <StatusBadge value={comment.status || 'open'} tone={comment.status === 'resolved' ? 'success' : 'warning'} />
+                    <span className="muted">{formatDate(comment.createdAt)}</span>
+                  </div>
+                </div>
+                <p>{comment.body}</p>
+              </div>
+              {onResolveToggle ? (
+                <button
+                  className="secondary-button"
+                  onClick={() => onResolveToggle(comment._id, comment.status === 'resolved' ? 'open' : 'resolved')}
+                >
+                  {comment.status === 'resolved' ? 'Re-open' : 'Resolve'}
+                </button>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-inline">{emptyText}</div>
+      )}
+    </section>
+  );
+}
+
+export function FeedbackForm({ title, eyebrow, placeholder, value, onChange, onSubmit, disabled, buttonLabel }: { title: string; eyebrow: string; placeholder: string; value: string; onChange: (value: string) => void; onSubmit: () => void; disabled: boolean; buttonLabel: string }) {
+  return (
+    <section className="panel">
+      <div className="section-header">
+        <div>
+          <p className="eyebrow">{eyebrow}</p>
+          <h2>{title}</h2>
+        </div>
+      </div>
+      <div className="note-form">
+        <textarea value={value} onChange={(event) => onChange(event.target.value)} rows={4} placeholder={placeholder} />
+        <button className="primary-button" disabled={disabled} type="button" onClick={onSubmit}>{buttonLabel}</button>
+      </div>
+    </section>
+  );
+}
+
+export function ReviewActionBar({ currentState, onSetState, isUpdating }: { currentState?: string; onSetState: (state: 'in_review' | 'approved' | 'rejected' | 'needs_changes') => void; isUpdating: boolean }) {
   return (
     <section className="panel actions-panel">
       <div>
@@ -202,9 +265,11 @@ export function ReviewActionBar({ currentState, onApprove, onReject, isUpdating 
         <h2>Review decision</h2>
         <p className="muted">Current state: {titleCase(currentState)}</p>
       </div>
-      <div className="action-row">
-        <button className="primary-button" disabled={isUpdating} onClick={onApprove}>Approve</button>
-        <button className="danger-button" disabled={isUpdating} onClick={onReject}>Reject</button>
+      <div className="action-grid">
+        <button className="secondary-button" disabled={isUpdating} onClick={() => onSetState('in_review')}>In review</button>
+        <button className="primary-button" disabled={isUpdating} onClick={() => onSetState('approved')}>Approve</button>
+        <button className="danger-button" disabled={isUpdating} onClick={() => onSetState('rejected')}>Reject</button>
+        <button className="warning-button" disabled={isUpdating} onClick={() => onSetState('needs_changes')}>Needs changes</button>
       </div>
     </section>
   );

@@ -4,9 +4,22 @@ import { Doc } from './_generated/dataModel';
 
 const approvalStateValidator = v.union(
   v.literal('pending'),
+  v.literal('in_review'),
   v.literal('approved'),
-  v.literal('rejected')
+  v.literal('rejected'),
+  v.literal('needs_changes')
 );
+
+const assetVersionStatusValidator = v.union(
+  v.literal('candidate'),
+  v.literal('in_review'),
+  v.literal('approved'),
+  v.literal('rejected'),
+  v.literal('needs_changes')
+);
+
+const feedbackScopeValidator = v.union(v.literal('asset'), v.literal('slide'));
+const feedbackStatusValidator = v.union(v.literal('open'), v.literal('resolved'));
 
 async function getCurrentVersionForAsset(ctx: any, asset: Doc<'assets'>) {
   if (asset.currentVersionId) {
@@ -95,6 +108,11 @@ export const getAssetDetail = query({
       .withIndex('by_asset', (q) => q.eq('assetId', asset._id))
       .order('desc')
       .take(100);
+    const feedbackComments = await ctx.db
+      .query('feedbackComments')
+      .withIndex('by_asset', (q) => q.eq('assetId', asset._id))
+      .order('desc')
+      .take(200);
 
     const currentVersion = asset.currentVersionId
       ? await ctx.db.get(asset.currentVersionId)
@@ -113,8 +131,73 @@ export const getAssetDetail = query({
       currentVersion,
       versions,
       notes,
+      feedbackComments,
       primaryReference,
     };
+  },
+});
+
+export const createFeedbackComment = mutation({
+  args: {
+    assetId: v.id('assets'),
+    assetVersionId: v.optional(v.id('assetVersions')),
+    scopeType: feedbackScopeValidator,
+    slideIndex: v.optional(v.number()),
+    body: v.string(),
+    authorType: v.optional(v.union(v.literal('human'), v.literal('agent'))),
+    authorId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const asset = await ctx.db.get(args.assetId);
+    if (!asset) {
+      throw new Error('Asset not found');
+    }
+
+    if (args.assetVersionId) {
+      const version = await ctx.db.get(args.assetVersionId);
+      if (!version || version.assetId !== args.assetId || version.projectId !== asset.projectId) {
+        throw new Error('Version not found for asset');
+      }
+    }
+
+    if (args.scopeType === 'slide' && (args.slideIndex === undefined || args.slideIndex < 0)) {
+      throw new Error('slideIndex is required for slide feedback');
+    }
+
+    const now = new Date().toISOString();
+    return await ctx.db.insert('feedbackComments', {
+      projectId: asset.projectId,
+      assetId: args.assetId,
+      assetVersionId: args.assetVersionId,
+      scopeType: args.scopeType,
+      slideIndex: args.slideIndex,
+      body: args.body,
+      authorType: args.authorType ?? 'human',
+      authorId: args.authorId,
+      status: 'open',
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+export const updateFeedbackCommentStatus = mutation({
+  args: {
+    commentId: v.id('feedbackComments'),
+    status: feedbackStatusValidator,
+  },
+  handler: async (ctx, args) => {
+    const comment = await ctx.db.get(args.commentId);
+    if (!comment) {
+      throw new Error('Feedback comment not found');
+    }
+
+    await ctx.db.patch(args.commentId, {
+      status: args.status,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return args.commentId;
   },
 });
 
@@ -217,6 +300,41 @@ export const setCurrentVersion = mutation({
     });
 
     return args.versionId;
+  },
+});
+
+export const setAssetVersionReviewState = mutation({
+  args: {
+    assetId: v.id('assets'),
+    versionId: v.id('assetVersions'),
+    reviewState: assetVersionStatusValidator,
+  },
+  handler: async (ctx, args) => {
+    const asset = await ctx.db.get(args.assetId);
+    const version = await ctx.db.get(args.versionId);
+
+    if (!asset || !version || version.assetId !== args.assetId || version.projectId !== asset.projectId) {
+      throw new Error('Version not found for asset');
+    }
+
+    const now = new Date().toISOString();
+    await ctx.db.patch(args.versionId, {
+      status: args.reviewState,
+      updatedAt: now,
+    });
+
+    const mappedApprovalState =
+      args.reviewState === 'candidate'
+        ? 'pending'
+        : args.reviewState;
+
+    await ctx.db.patch(args.assetId, {
+      approvalState: mappedApprovalState,
+      currentVersionId: args.reviewState === 'approved' ? args.versionId : asset.currentVersionId,
+      updatedAt: now,
+    });
+
+    return args.reviewState;
   },
 });
 

@@ -66,7 +66,7 @@ export default defineSchema({
     primaryReferenceId: v.optional(v.id('references')),
     currentVersionId: v.optional(v.id('assetVersions')),
     notionPageUrl: v.optional(v.string()),
-    approvalState: v.optional(v.union(v.literal('pending'), v.literal('approved'), v.literal('rejected'))),
+    approvalState: v.optional(v.union(v.literal('pending'), v.literal('in_review'), v.literal('approved'), v.literal('rejected'), v.literal('needs_changes'))),
     createdAt: v.string(),
     updatedAt: v.string(),
   })
@@ -82,7 +82,7 @@ export default defineSchema({
     versionLabel: v.string(),
     coverImageUrl: v.optional(v.string()),
     previewUrls: v.optional(v.array(v.string())),
-    status: v.union(v.literal('candidate'), v.literal('approved'), v.literal('rejected')),
+    status: v.union(v.literal('candidate'), v.literal('in_review'), v.literal('approved'), v.literal('rejected'), v.literal('needs_changes')),
     notes: v.optional(v.string()),
     createdAt: v.string(),
     updatedAt: v.string(),
@@ -102,6 +102,25 @@ export default defineSchema({
   })
     .index('by_asset', ['assetId'])
     .index('by_asset_version', ['assetVersionId'])
+    .index('by_project', ['projectId']),
+
+  feedbackComments: defineTable({
+    projectId: v.id('projects'),
+    assetId: v.id('assets'),
+    assetVersionId: v.optional(v.id('assetVersions')),
+    scopeType: v.union(v.literal('asset'), v.literal('slide')),
+    slideIndex: v.optional(v.number()),
+    body: v.string(),
+    authorType: v.union(v.literal('human'), v.literal('agent')),
+    authorId: v.optional(v.string()),
+    status: v.union(v.literal('open'), v.literal('resolved')),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index('by_asset', ['assetId'])
+    .index('by_asset_version', ['assetVersionId'])
+    .index('by_asset_scope', ['assetId', 'scopeType'])
+    .index('by_asset_version_scope', ['assetVersionId', 'scopeType'])
     .index('by_project', ['projectId']),
 
   tasks: defineTable({

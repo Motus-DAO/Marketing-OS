@@ -11,6 +11,7 @@ body { margin: 0; background: #0f141b; color: #e8ecf3; }
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
+button.preview-button { appearance: none; text-align: left; background: transparent; border: 0; padding: 0; color: inherit; }
 
 .app-shell { min-height: 100vh; }
 .app-header {
@@ -66,19 +67,25 @@ h1, h2, h3, p { margin: 0; }
 .preview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
 .preview-frame { display: grid; gap: 8px; }
 .preview-frame img { border-radius: 12px; min-height: 220px; background: #0f141b; border: 1px solid #273244; }
+.preview-button { border-radius: 14px; transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease; }
+.preview-button.is-selected img { border-color: #83b3ff; box-shadow: 0 0 0 2px rgba(131, 179, 255, 0.25); }
+.preview-button:hover { transform: translateY(-1px); }
 .stack-list { display: grid; gap: 12px; }
 .list-row, .note-card { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 12px; background: #101721; border: 1px solid #222d3d; }
 .list-row-body { flex: 1; }
 .empty-inline { color: #90a0b7; padding: 12px 0; }
 .actions-panel { display: grid; gap: 16px; }
-.action-row { display: flex; gap: 12px; }
-.primary-button, .secondary-button, .danger-button {
+.action-row, .action-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+.primary-button, .secondary-button, .danger-button, .warning-button {
   border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 600;
 }
 .primary-button { background: #83b3ff; color: #0f141b; }
 .secondary-button { background: #263244; color: #e8ecf3; }
 .danger-button { background: #ff738f; color: #22080d; }
+.warning-button { background: #f3c56b; color: #261b05; }
 .note-form { display: grid; gap: 12px; }
+.feedback-note-body { flex: 1; display: grid; gap: 10px; }
+.feedback-note-meta { display: flex; align-items: center; gap: 8px; }
 .empty-state, .loading-state { min-height: 180px; display: grid; place-content: center; gap: 8px; text-align: center; }
 
 @media (max-width: 900px) {
