@@ -20,6 +20,13 @@ export function AssetDetailPage() {
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
 
+  const feedbackComments = data?.feedbackComments ?? [];
+  const assetComments = useMemo(() => feedbackComments.filter((comment: any) => comment.scopeType === 'asset'), [feedbackComments]);
+  const slideComments = useMemo(
+    () => feedbackComments.filter((comment: any) => comment.scopeType === 'slide' && comment.slideIndex === selectedSlideIndex),
+    [feedbackComments, selectedSlideIndex]
+  );
+
   if (data === undefined) {
     return <div className="loading-state">Loading asset…</div>;
   }
@@ -27,13 +34,6 @@ export function AssetDetailPage() {
   if (!data) {
     return <EmptyState title="Asset not found" body="The selected asset does not exist or is not available yet." />;
   }
-
-  const feedbackComments = data.feedbackComments ?? [];
-  const assetComments = useMemo(() => feedbackComments.filter((comment: any) => comment.scopeType === 'asset'), [feedbackComments]);
-  const slideComments = useMemo(
-    () => feedbackComments.filter((comment: any) => comment.scopeType === 'slide' && comment.slideIndex === selectedSlideIndex),
-    [feedbackComments, selectedSlideIndex]
-  );
 
   const handleNoteSubmit = async () => {
     if (!noteBody.trim()) return;
