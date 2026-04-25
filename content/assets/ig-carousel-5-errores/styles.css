@@ -1,0 +1,201 @@
+:root {
+  --bg: #070b12;
+  --bg2: #0c1320;
+  --panel: rgba(255,255,255,0.04);
+  --panel-2: rgba(255,255,255,0.06);
+  --text: #f4f7fb;
+  --muted: #a6b0c3;
+  --line: rgba(255,255,255,0.08);
+  --gradient: linear-gradient(90deg, #9ee7ff 0%, #56b7ff 45%, #8f7dff 100%);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #02050a;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+}
+.deck {
+  display: grid;
+  gap: 32px;
+  padding: 40px 24px 80px;
+  justify-content: center;
+}
+.slide {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  background:
+    radial-gradient(circle at top left, rgba(86,183,255,0.18), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(143,125,255,0.14), transparent 24%),
+    linear-gradient(180deg, var(--bg2), var(--bg));
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.slide::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0.08));
+  pointer-events: none;
+}
+.cover {
+  background-image:
+    linear-gradient(180deg, rgba(4,8,15,0.18), rgba(4,8,15,0.52)),
+    url('./cover-bg-02.png');
+  background-size: cover;
+  background-position: center center;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.16), rgba(0,0,0,0.46));
+}
+.content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  padding: 96px 88px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.grid-two {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.eyebrow {
+  display: inline-block;
+  font-size: 24px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+h1, h2, h3 {
+  margin: 0;
+  font-family: 'Jura', sans-serif;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+h1 {
+  font-size: 108px;
+  max-width: 860px;
+}
+h2 {
+  font-size: 76px;
+  max-width: 760px;
+}
+h3 {
+  font-size: 40px;
+}
+p {
+  margin: 24px 0 0;
+  font-size: 34px;
+  line-height: 1.35;
+  color: #dfe6f3;
+  max-width: 760px;
+}
+.sub {
+  margin-top: 36px;
+  font-size: 30px;
+  color: var(--muted);
+}
+.num {
+  font-family: 'Jura', sans-serif;
+  font-size: 124px;
+  line-height: 1;
+  color: rgba(255,255,255,0.16);
+}
+.num.strong {
+  color: rgba(255,255,255,0.24);
+}
+.gradient {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.section-card .content {
+  justify-content: center;
+}
+.signal-slide .content {
+  justify-content: center;
+}
+.signal-lines {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 50%, rgba(86,183,255,0.12), transparent 18%),
+    radial-gradient(circle at 70% 40%, rgba(143,125,255,0.1), transparent 20%);
+}
+.signal-slide::after {
+  content: "";
+  position: absolute;
+  left: 80px;
+  right: 80px;
+  top: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(158,231,255,0.25), rgba(143,125,255,0.25), transparent);
+  box-shadow: 0 0 24px rgba(86,183,255,0.12);
+}
+.contrast-slide .content {
+  justify-content: center;
+}
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.compare-card {
+  padding: 36px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.compare-label {
+  font-size: 18px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.active-card {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(158,231,255,0.18);
+}
+.muted-card {
+  opacity: 0.9;
+}
+.conclusion-slide .content {
+  justify-content: center;
+}
+.cta .content {
+  justify-content: center;
+  align-items: flex-start;
+}
+.cta-pill {
+  margin-top: 42px;
+  padding: 18px 28px;
+  border: 1px solid rgba(158,231,255,0.35);
+  color: #dff9ff;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.03);
+}
+@media (max-width: 1160px) {
+  .deck { padding: 24px 8px 48px; }
+  .slide { transform: scale(0.7); transform-origin: top center; margin-bottom: -360px; }
+}
